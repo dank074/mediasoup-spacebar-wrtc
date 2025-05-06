@@ -1,5 +1,9 @@
 import { RtpCodecCapability, Transport } from "mediasoup/node/lib/types";
-import { MediasoupSignalingDelegate, RouterType } from "./MediasoupSignalingDelegate";
+import {
+    MEDIA_CODECS,
+    MediasoupSignalingDelegate,
+    RouterType,
+} from "./MediasoupSignalingDelegate";
 import { MediasoupWebRtcClient } from "./MediasoupWebRtcClient";
 import { Codec, RtpHeader } from "spacebar-webrtc-types";
 import { RtpHeaderExtensionUri } from "mediasoup/node/lib/fbs/rtp-parameters";
@@ -29,64 +33,39 @@ export class VoiceRoom {
         this._clients.set(client.user_id, client);
     };
 
-    onClientOffer = (client: MediasoupWebRtcClient, transport: Transport, codecs: Codec[], rtpHeaders: RtpHeader[]) => {
+    onClientOffer = (
+        client: MediasoupWebRtcClient,
+        transport: Transport,
+        codecs: Codec[],
+        rtpHeaders: RtpHeader[]
+    ) => {
         client.transport = transport;
         client.codecs = codecs;
-        client.headerExtensions = rtpHeaders.filter(header => ['urn:ietf:params:rtp-hdrext:sdes:mid', 'urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id', 'urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id', 'http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07', 'urn:ietf:params:rtp-hdrext:framemarking', 'urn:ietf:params:rtp-hdrext:ssrc-audio-level', 'urn:3gpp:video-orientation', 'urn:ietf:params:rtp-hdrext:toffset', 'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01', 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time', 'http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time', 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay'].includes(header.uri));
-        const supportedCodecs: RtpCodecCapability[] = [
-            {
-                kind: "audio",
-                mimeType: "audio/opus",
-                clockRate: 48000,
-                channels: 2,
-                rtcpFeedback: [{ type: "nack" }, { type: "transport-cc" }],
-                parameters: {
-                    minptime: 10,
-                    usedtx: 1,
-                    useinbandfec: 1,
-                },
-                preferredPayloadType:
-                    codecs?.find((val) => val.name == "opus")?.payload_type ??
-                    111,
-            },
-            {
-                kind: "video",
-                mimeType: "video/H264",
-                clockRate: 90000,
-                parameters: {
-                    "level-asymmetry-allowed": 1,
-                    "packetization-mode": 1,
-                    "profile-level-id": "42e01f",
-                    "x-google-max-bitrate": 2500,
-                },
-                rtcpFeedback: [
-                    { type: "nack" },
-                    { type: "nack", parameter: "pli" },
-                    { type: "ccm", parameter: "fir" },
-                    { type: "goog-remb" },
-                    { type: "transport-cc" },
-                ],
-                preferredPayloadType:
-                    codecs?.find((val) => val.name == "H264")?.payload_type ??
-                    102,
-            },
-            {
-                kind: "video",
-                mimeType: "video/rtx",
-                clockRate: 90000,
-                parameters: {
-                    apt:
-                        codecs?.find((val) => val.name == "H264")
-                            ?.payload_type ?? 102,
-                },
-                preferredPayloadType:
-                    codecs?.find((val) => val.name == "H264")
-                        ?.rtx_payload_type ?? 103,
-            },
-        ];
+        client.headerExtensions = rtpHeaders.filter((header) =>
+            [
+                "urn:ietf:params:rtp-hdrext:sdes:mid",
+                "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id",
+                "urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id",
+                "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07",
+                "urn:ietf:params:rtp-hdrext:framemarking",
+                "urn:ietf:params:rtp-hdrext:ssrc-audio-level",
+                "urn:3gpp:video-orientation",
+                "urn:ietf:params:rtp-hdrext:toffset",
+                "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+                "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+                "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time",
+                "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay",
+            ].includes(header.uri)
+        );
+        const supportedCodecs: RtpCodecCapability[] = MEDIA_CODECS.map(codec => {
+            const codecName = codec.mimeType.split("/")[1];
+            console.log(codecName);
+            const alternativePayloadType = codecName === "opus" ? 111 : 102;
+            return { ...codec, preferredPayloadType: codecs.find(c => c.name.toUpperCase() === codecName.toUpperCase())?.payload_type ?? alternativePayloadType}
+        })
 
         client.codecCapabilities = supportedCodecs;
-    }
+    };
 
     onClientLeave = (client: MediasoupWebRtcClient) => {
         console.log("stopping client");
@@ -119,7 +98,7 @@ export class VoiceRoom {
             client.room = undefined;
             client.audioProducer = undefined;
             client.videoProducer = undefined;
-            client.consumers = []
+            client.consumers = [];
             client.transport = undefined;
             client.websocket = undefined;
             client.emitter.removeAllListeners();

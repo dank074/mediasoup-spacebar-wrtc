@@ -1,7 +1,12 @@
 import * as mediasoup from "mediasoup";
 import { types as MediaSoupTypes } from "mediasoup";
 import { AppData, Router, RtpHeaderExtension } from "mediasoup/node/lib/types";
-import { Codec, RtpHeader, SignalingDelegate, WebRtcClient } from "spacebar-webrtc-types";
+import {
+    Codec,
+    RtpHeader,
+    SignalingDelegate,
+    WebRtcClient,
+} from "spacebar-webrtc-types";
 import { VoiceRoom } from "./VoiceRoom";
 import { MediasoupWebRtcClient } from "./MediasoupWebRtcClient";
 import { SDPInfo } from "semantic-sdp";
@@ -23,7 +28,7 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
         portMax: number
     ): Promise<void> {
         this._ip = public_ip;
-        const numWorkers = 1;
+        const numWorkers = 2;
 
         for (let i = 0; i < numWorkers; i++) {
             const worker = await mediasoup.createWorker({
@@ -44,7 +49,7 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
                 ],
                 rtcMinPort: portMin,
                 rtcMaxPort: portMax,
-                disableLiburing: true,
+                //disableLiburing: true,
             });
 
             worker.on("died", () => {
@@ -107,18 +112,20 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
     ): Promise<{ sdp: string; selectedVideoCodec: string }> {
         const room = this._rooms.get(client.voiceRoomId);
 
-		if (!room) {
-			console.error(
-				"error, client sent an offer but has not authenticated",
-			);
-			Promise.reject();
-		}
+        if (!room) {
+            console.error(
+                "error, client sent an offer but has not authenticated"
+            );
+            Promise.reject();
+        }
 
         const offer = SDPInfo.parse("m=audio\n" + sdpOffer);
 
-		const rtpHeaders: RtpHeader[] = Array.from(offer.medias[0].extensions.entries()).map( ([id, uri]) => {
-            return { uri, id }
-        })
+        const rtpHeaders: RtpHeader[] = Array.from(
+            offer.medias[0].extensions.entries()
+        ).map(([id, uri]) => {
+            return { uri, id };
+        });
 
         const transport = await room!.router.router.createWebRtcTransport({
             listenIps: [{ ip: this.ip }],
@@ -152,23 +159,24 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
         const iceCandidate = iceCandidates[0];
         const dltsParamters = transport!.dtlsParameters;
         const fingerprint = dltsParamters.fingerprints.find(
-            (x) => x.algorithm === "sha-256",
+            (x) => x.algorithm === "sha-256"
         )!;
 
         const sdpAnswer =
-		`m=audio ${iceCandidate.port} ICE/SDP\n` +
-		`a=fingerprint:sha-256 ${fingerprint.value}\n` +
-		`c=IN IP4 ${iceCandidate.ip}\n` +
-		`a=rtcp:${iceCandidate.port}\n` +
-		`a=ice-ufrag:${iceParameters.usernameFragment}\n` +
-		`a=ice-pwd:${iceParameters.password}\n` +
-		`a=fingerprint:sha-256 ${fingerprint.value}\n` +
-		`a=candidate:1 1 ${iceCandidate.protocol.toUpperCase()} ${
-			iceCandidate.priority
-		} ${iceCandidate.ip} ${iceCandidate.port} typ ${iceCandidate.type}\n`;
+            `m=audio ${iceCandidate.port} ICE/SDP\n` +
+            `a=fingerprint:sha-256 ${fingerprint.value}\n` +
+            `c=IN IP4 ${iceCandidate.ip}\n` +
+            `a=rtcp:${iceCandidate.port}\n` +
+            `a=ice-ufrag:${iceParameters.usernameFragment}\n` +
+            `a=ice-pwd:${iceParameters.password}\n` +
+            `a=fingerprint:sha-256 ${fingerprint.value}\n` +
+            `a=candidate:1 1 ${iceCandidate.protocol.toUpperCase()} ${
+                iceCandidate.priority
+            } ${iceCandidate.ip} ${iceCandidate.port} typ ${
+                iceCandidate.type
+            }\n`;
 
         return { sdp: sdpAnswer, selectedVideoCodec: "H264" };
-
     }
 
     onClientClose<T>(client: WebRtcClient<T>): void {
@@ -181,10 +189,10 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
 
     getClientsForRtcServer<T>(rtcServerId: string): Set<WebRtcClient<T>> {
         if (!this._rooms.has(rtcServerId)) {
-			return new Set();
-		}
+            return new Set();
+        }
 
-		return new Set(this._rooms.get(rtcServerId)?.clients.values())!;
+        return new Set(this._rooms.get(rtcServerId)?.clients.values())!;
     }
 
     stop(): Promise<void> {
@@ -200,8 +208,8 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
     }
 
     get rooms(): Map<string, VoiceRoom> {
-		return this._rooms;
-	}
+        return this._rooms;
+    }
 
     getNextWorker() {
         const worker = this._workers[this.nextWorkerIdx];
@@ -212,7 +220,10 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
         return worker;
     }
 
-    async getOrCreateRoom(roomId: string, type: "guild-voice" | "dm-voice" | "stream",) {
+    async getOrCreateRoom(
+        roomId: string,
+        type: "guild-voice" | "dm-voice" | "stream"
+    ) {
         if (!this._rooms.has(roomId)) {
             const worker = this.getNextWorker();
             const router = await worker.createRouter({
@@ -224,7 +235,7 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
                 worker,
             };
 
-            const room = new VoiceRoom(roomId, type, this, data )
+            const room = new VoiceRoom(roomId, type, this, data);
             this._rooms.set(roomId, room);
             return room;
         }
@@ -233,7 +244,7 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
     }
 }
 
-const MEDIA_CODECS: MediaSoupTypes.RtpCodecCapability[] = [
+export const MEDIA_CODECS: MediaSoupTypes.RtpCodecCapability[] = [
     {
         kind: "audio",
         mimeType: "audio/opus",
@@ -256,6 +267,7 @@ const MEDIA_CODECS: MediaSoupTypes.RtpCodecCapability[] = [
             "packetization-mode": 1,
             "profile-level-id": "42e01f",
             "x-google-max-bitrate": 2500,
+            "x-google-start-bitrate": 2500,
         },
         rtcpFeedback: [
             { type: "nack" },
