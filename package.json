@@ -1,0 +1,32 @@
+{
+    "name": "mediasoup-spacebar-wrtc",
+    "version": "1.0.0",
+    "description": "a spacebar-compatible werbtc server that uses mediasoup",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "mediasoup": "github:dank074/mediasoup-fork#sc-dev",
+        "semantic-sdp": "^3.31.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.1",
+        "spacebar-webrtc-types": "github:dank074/spacebar-webrtc-types",
+        "typescript": "^5.6.3"
+    },
+    "peerDependencies": {
+        "spacebar-webrtc-types": "github:dank074/spacebar-webrtc-types"
+    },
+    "author": "",
+    "license": "ISC"
+}
