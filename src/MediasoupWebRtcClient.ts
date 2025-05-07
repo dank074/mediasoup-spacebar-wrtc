@@ -7,7 +7,7 @@ import {
     WebRtcClient,
 } from "spacebar-webrtc-types";
 import { VoiceRoom } from "./VoiceRoom";
-import EventEmitter from "node:events";
+import { EventEmitter } from "node:events";
 import {
     Consumer,
     Producer,
@@ -184,7 +184,7 @@ export class MediasoupWebRtcClient implements WebRtcClient<any> {
                             rtx: { ssrc: ssrc.rtx_ssrc! },
                             //scalabilityMode: "L1T1",
                             //scaleResolutionDownBy: 1,
-                            //maxBitrate: stream.max_bitrate,
+                            //maxBitrate: 2500000,
                             //rid: stream.rid,
                             codecPayloadType:
                                 this.codecCapabilities?.find(codec => codec.kind === "video")?.preferredPayloadType ?? 102,
@@ -282,13 +282,6 @@ export class MediasoupWebRtcClient implements WebRtcClient<any> {
                 await consumer.resume();
             }, 2000);
         }
-
-        // if (consumer.type === 'simulcast') {
-        // 	await consumer.setPreferredLayers({
-        // 	  spatialLayer: 2,
-        // 	  temporalLayer: 2
-        // 	})
-        // }
 
         this.consumers?.push(consumer);
     }

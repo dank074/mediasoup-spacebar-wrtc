@@ -1,6 +1,6 @@
 {
     "name": "mediasoup-spacebar-wrtc",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "a spacebar-compatible werbtc server that uses mediasoup",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
