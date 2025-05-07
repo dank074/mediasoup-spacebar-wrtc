@@ -278,4 +278,11 @@ export const MEDIA_CODECS: MediaSoupTypes.RtpCodecCapability[] = [
         ],
         preferredPayloadType: 102,
     },
+    /*
+    {
+        kind: "video",
+        mimeType: "video/VP8",
+        clockRate: 90000,
+        preferredPayloadType: 101,
+      }, */
 ];

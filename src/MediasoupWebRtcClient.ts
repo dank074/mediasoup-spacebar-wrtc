@@ -194,8 +194,10 @@ export class MediasoupWebRtcClient implements WebRtcClient<any> {
                     headerExtensions: this.headerExtensions
                         ?.filter(
                             (header) =>
-                                header.uri ===
-                                "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+                                header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay" ||
+								header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time" ||
+								header.uri === "urn:ietf:params:rtp-hdrext:toffset" ||
+								header.uri === "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
                         )
                         .map((header) => {
                             return {
