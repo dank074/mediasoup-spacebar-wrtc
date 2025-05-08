@@ -128,7 +128,8 @@ export class MediasoupSignalingDelegate implements SignalingDelegate {
         });
 
         const transport = await room!.router.router.createWebRtcTransport({
-            listenIps: [{ ip: this.ip }],
+            //listenIps: [{ ip: this.ip }],
+            listenInfos: [{ ip: "0.0.0.0", announcedAddress: this.ip, protocol: "udp" }],
             enableUdp: true,
             //maxIncomingBitrate: 2500000,
             initialAvailableOutgoingBitrate: 2500000,
